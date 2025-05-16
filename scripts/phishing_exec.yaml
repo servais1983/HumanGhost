@@ -1,0 +1,5 @@
+name: Campagne de phishing bancaire
+steps:
+  - create
+  - host
+  - send
