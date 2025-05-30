@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/14cd9261-af7b-4587-99ab-e1844d468eb7)
+![image](humanghost.png)
 
 
 # 🎭 HumanGhost CLI
