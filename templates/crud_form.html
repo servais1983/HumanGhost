@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>{{ title }}</h1>
+    <form method="post">
+        {% for field in fields %}
+            <label for="{{ field.name }}">{{ field.label }}</label>
+            {% if field.type == 'textarea' %}
+                <textarea name="{{ field.name }}" id="{{ field.name }}" rows="10">{{ value[field.name] or '' }}</textarea>
+            {% else %}
+                <input type="{{ field.type or 'text' }}" name="{{ field.name }}" id="{{ field.name }}" value="{{ value[field.name] or '' }}">
+            {% endif %}
+        {% endfor %}
+        <input type="submit" value="{{ action }}">
+    </form>
+{% endblock %}
