@@ -1,71 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HumanGhost - Tableau de Bord</title>
-    </head>
+    <style>
+        /* ... styles existants ... */
+        .campaign-selector { padding: 1em; background: #2a2d2e; border-radius: 5px; margin-bottom: 1em; display: flex; justify-content: space-between; align-items: center; }
+        #report-btn { background-color: #569cd6; color: white; border: none; padding: 10px 15px; border-radius: 3px; cursor: pointer; text-decoration: none; }
+    </style>
+</head>
 <body>
     <h1>🎭 HumanGhost - Tableau de Bord</h1>
     <div class="campaign-selector">
-        <label for="campaign-select">Choisir une campagne:</label>
-        <select id="campaign-select">
-            {% for campaign in campaigns %}
-                <option value="{{ campaign.id }}">{{ campaign.name }} ({{ campaign.created_at.strftime('%Y-%m-%d %H:%M') }})</option>
-            {% endfor %}
-        </select>
+        <div>
+            <label for="campaign-select">Choisir une campagne:</label>
+            <select id="campaign-select">
+                {% for campaign in campaigns %}
+                    <option value="{{ campaign.id }}">{{ campaign.name }} ({{ campaign.created_at.strftime('%Y-%m-%d %H:%M') }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <a href="#" id="report-btn" target="_blank">Télécharger le Rapport PDF</a>
+        </div>
     </div>
-    <div class="log-container">
-        <table>
-            <thead>
-                <tr><th>Heure</th><th>Événement</th><th>Détails</th></tr>
-            </thead>
-            <tbody id="log-table-body">
-                </tbody>
-        </table>
-    </div>
-
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        const socket = io();
-        const campaignSelect = document.getElementById('campaign-select');
-        const tableBody = document.getElementById('log-table-body');
+        // ... (le javascript existant ne change pas) ...
+        const reportBtn = document.getElementById('report-btn');
 
-        // Fonction pour charger les événements d'une campagne
-        async function loadEvents(campaignId) {
-            const response = await fetch(`/api/campaign/${campaignId}/events`);
-            const events = await response.json();
-            tableBody.innerHTML = ''; // Vide le tableau
-            events.forEach(event => addEventToTable(event));
+        // Fonction pour mettre à jour le lien du bouton
+        function updateReportLink(campaignId) {
+            reportBtn.href = `/report/campaign/${campaignId}`;
         }
 
-        // Fonction pour ajouter une ligne au tableau
-        function addEventToTable(data) {
-            const newRow = document.createElement('tr');
-            let detailsClass = data.type === 'credential' ? 'credential' : 'event';
-            newRow.innerHTML = `
-                <td>${data.timestamp}</td>
-                <td class="${detailsClass}">${data.event}</td>
-                <td>${data.details}</td>
-            `;
-            tableBody.prepend(newRow);
-        }
-
-        // Charger les événements de la première campagne au chargement
+        // Mettre à jour le lien au chargement et au changement
         if (campaignSelect.value) {
             loadEvents(campaignSelect.value);
+            updateReportLink(campaignSelect.value);
         }
 
-        // Changer de campagne
         campaignSelect.addEventListener('change', () => {
-            loadEvents(campaignSelect.value);
+            const campaignId = campaignSelect.value;
+            loadEvents(campaignId);
+            updateReportLink(campaignId);
         });
 
-        // Mettre à jour en temps réel via Socket.IO
-        socket.on('update', (data) => {
-            // On ajoute l'événement seulement si la campagne correspondante est sélectionnée
-            if (campaignSelect.value == data.campaign_id) {
-                 addEventToTable(data);
-            }
-        });
     </script>
 </body>
 </html>
