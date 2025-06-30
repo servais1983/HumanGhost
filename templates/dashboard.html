@@ -2,28 +2,21 @@
 <html>
 <head>
     <title>HumanGhost - Tableau de Bord</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: 'Helvetica Neue', sans-serif; background-color: #1e1e1e; color: #d4d4d4; margin: 0; padding: 2em; }
-        h1 { color: #569cd6; border-bottom: 2px solid #569cd6; padding-bottom: 10px; }
-        .log-container { background: #252526; border: 1px solid #333; border-radius: 5px; padding: 1em; margin-top: 1em; max-height: 80vh; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-        th { background-color: #2a2d2e; }
-        .event { color: #4ec9b0; }
-        .credential { color: #d16969; font-weight: bold; }
-    </style>
-</head>
+    </head>
 <body>
-    <h1>🎭 HumanGhost - Tableau de Bord en Temps Réel</h1>
+    <h1>🎭 HumanGhost - Tableau de Bord</h1>
+    <div class="campaign-selector">
+        <label for="campaign-select">Choisir une campagne:</label>
+        <select id="campaign-select">
+            {% for campaign in campaigns %}
+                <option value="{{ campaign.id }}">{{ campaign.name }} ({{ campaign.created_at.strftime('%Y-%m-%d %H:%M') }})</option>
+            {% endfor %}
+        </select>
+    </div>
     <div class="log-container">
         <table>
             <thead>
-                <tr>
-                    <th>Heure</th>
-                    <th>Événement</th>
-                    <th>Détails</th>
-                </tr>
+                <tr><th>Heure</th><th>Événement</th><th>Détails</th></tr>
             </thead>
             <tbody id="log-table-body">
                 </tbody>
@@ -32,30 +25,46 @@
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        // Connexion au serveur Socket.IO
         const socket = io();
+        const campaignSelect = document.getElementById('campaign-select');
+        const tableBody = document.getElementById('log-table-body');
 
-        // Écoute de l'événement de connexion
-        socket.on('connect', () => {
-            console.log('Connecté au serveur de dashboard !');
-        });
+        // Fonction pour charger les événements d'une campagne
+        async function loadEvents(campaignId) {
+            const response = await fetch(`/api/campaign/${campaignId}/events`);
+            const events = await response.json();
+            tableBody.innerHTML = ''; // Vide le tableau
+            events.forEach(event => addEventToTable(event));
+        }
 
-        // Écoute des nouveaux événements envoyés par le serveur
-        socket.on('update', (data) => {
-            console.log('Nouvel événement reçu:', data);
-            const tableBody = document.getElementById('log-table-body');
+        // Fonction pour ajouter une ligne au tableau
+        function addEventToTable(data) {
             const newRow = document.createElement('tr');
-            
             let detailsClass = data.type === 'credential' ? 'credential' : 'event';
-            
             newRow.innerHTML = `
                 <td>${data.timestamp}</td>
                 <td class="${detailsClass}">${data.event}</td>
                 <td>${data.details}</td>
             `;
-            
-            // Ajoute la nouvelle ligne au début du tableau
             tableBody.prepend(newRow);
+        }
+
+        // Charger les événements de la première campagne au chargement
+        if (campaignSelect.value) {
+            loadEvents(campaignSelect.value);
+        }
+
+        // Changer de campagne
+        campaignSelect.addEventListener('change', () => {
+            loadEvents(campaignSelect.value);
+        });
+
+        // Mettre à jour en temps réel via Socket.IO
+        socket.on('update', (data) => {
+            // On ajoute l'événement seulement si la campagne correspondante est sélectionnée
+            if (campaignSelect.value == data.campaign_id) {
+                 addEventToTable(data);
+            }
         });
     </script>
 </body>
