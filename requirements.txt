@@ -1,1 +1,4 @@
 pyyaml
+flask
+typer[all]
+jinja2
