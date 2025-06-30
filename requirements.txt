@@ -6,3 +6,4 @@ Flask-SocketIO
 qrcode[pil]
 openai
 Flask-SQLAlchemy
+WeasyPrint
