@@ -5,3 +5,4 @@ jinja2
 Flask-SocketIO
 qrcode[pil]
 openai
+Flask-SQLAlchemy
