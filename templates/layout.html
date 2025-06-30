@@ -1,14 +1,130 @@
 <!DOCTYPE html>
 <html>
 <head>
-    </head>
+    <title>HumanGhost C2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* --- Réinitialisation et Style de Base --- */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            background-color: #1e1e1e; 
+            color: #d4d4d4; 
+            margin: 0; 
+            display: flex; 
+            font-size: 14px;
+        }
+
+        /* --- Barre Latérale de Navigation --- */
+        .sidebar { 
+            width: 220px; 
+            background: #252526; 
+            padding: 1.5em; 
+            height: 100vh;
+            box-sizing: border-box;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar h2 { 
+            color: #d16969; 
+            margin-top: 0;
+            text-align: center;
+            font-weight: 600;
+        }
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .sidebar a { 
+            display: block; 
+            color: #d4d4d4; 
+            padding: 10px 15px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            transition: background-color 0.2s ease-in-out;
+        }
+        .sidebar a:hover, .sidebar a.active { 
+            background-color: #3c3c3c; 
+        }
+
+        /* --- Contenu Principal --- */
+        .content { 
+            flex-grow: 1; 
+            padding: 2em 3em;
+            overflow-y: auto;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .content h1 {
+            color: #569cd6;
+            border-bottom: 2px solid #569cd6;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        /* --- Styles pour les Formulaires --- */
+        form { margin-top: 2em; display: flex; flex-direction: column; gap: 15px; }
+        label { font-weight: bold; }
+        input[type="text"], input[type="password"], input[type="email"], input[type="number"], select, textarea {
+            background-color: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 150px;
+            font-family: "Courier New", monospace;
+        }
+        input[type="submit"], .btn-primary {
+            background-color: #569cd6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            align-self: flex-start; /* Pour que le bouton ne prenne pas toute la largeur */
+        }
+        .btn-primary:hover { background-color: #4a8ac9; }
+
+        /* --- Styles pour les Tables --- */
+        table { width: 100%; border-collapse: collapse; margin-top: 2em; }
+        th, td { border: 1px solid #333; padding: 12px; text-align: left; }
+        th { background-color: #2a2d2e; }
+
+        /* --- Éléments d'Interface --- */
+        .resource-section { 
+            margin-top: 2em; 
+            background: #2a2d2e; 
+            padding: 1.5em; 
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+        .flash-success {
+            padding: 1em;
+            background-color: #387938;
+            color: white;
+            border-radius: 4px;
+            margin-bottom: 1em;
+        }
+    </style>
+</head>
 <body>
     <div class="sidebar">
         <h2>HumanGhost</h2>
         <nav>
             <a href="{{ url_for('dashboard') }}" class="{{ 'active' if page == 'dashboard' else '' }}">Tableau de Bord</a>
             <a href="{{ url_for('campaign_launcher') }}" class="{{ 'active' if page == 'launcher' else '' }}">Lancer une Campagne</a>
-            <a href="#">Gérer les Templates</a> <a href="#">Gérer les Cibles</a> <a href="{{ url_for('settings') }}" class="{{ 'active' if page == 'settings' else '' }}">Paramètres</a>
+            <a href="{{ url_for('resources') }}" class="{{ 'active' if page == 'resources' else '' }}">Gérer les Ressources</a>
+            <a href="{{ url_for('settings') }}" class="{{ 'active' if page == 'settings' else '' }}">Paramètres</a>
         </nav>
     </div>
     <main class="content">
