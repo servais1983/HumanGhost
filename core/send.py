@@ -2,30 +2,34 @@ import smtplib
 from email.message import EmailMessage
 from jinja2 import Template
 
-def run(config):
+# Le run() accepte maintenant du contenu dynamique
+def run(config, dynamic_subject=None, dynamic_body=None):
     """
     Génère et envoie l'email de phishing.
+    Peut utiliser soit un template de fichier, soit du contenu dynamique.
     """
     print("[*] Préparation de l'email de phishing...")
-
-    # Utilisation de Jinja2 pour le template d'email
-    with open(config['email']['template_file'], 'r') as f:
-        template = Template(f.read())
-
-    # Variables pour le template
-    template_vars = {
-        "phishing_url": config['email']['phishing_url'],
-        "target_name": config['target']['name']
-    }
     
-    email_body = template.render(template_vars)
+    email_subject = dynamic_subject or config['email']['subject']
+    
+    if dynamic_body:
+        email_body_html = dynamic_body.replace('\n', '<br>')
+    else:
+        # Utilisation de Jinja2 si pas de contenu dynamique
+        with open(config['email']['template_file'], 'r') as f:
+            template = Template(f.read())
+        template_vars = {
+            "phishing_url": config['email']['phishing_url'],
+            "target_name": config['target']['name']
+        }
+        email_body_html = template.render(template_vars)
 
     msg = EmailMessage()
-    msg['Subject'] = config['email']['subject']
+    msg['Subject'] = email_subject
     msg['From'] = config['smtp']['sender_email']
     msg['To'] = config['target']['email']
     msg.set_content("Veuillez activer le HTML pour voir ce message.")
-    msg.add_alternative(email_body, subtype='html')
+    msg.add_alternative(email_body_html, subtype='html')
     
     try:
         print(f"[*] Connexion au serveur SMTP : {config['smtp']['host']}:{config['smtp']['port']}...")
