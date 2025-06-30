@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Gérer les Ressources de Campagne</h1>
+    <p>Créez et modifiez ici les briques de vos futures campagnes de phishing.</p>
+
+    <div class="resource-section">
+        <h2>Templates d'E-mail</h2>
+        <a href="{{ url_for('manage_email_templates') }}" class="btn-primary">Gérer les Templates d'E-mail</a>
+    </div>
+
+    <div class="resource-section">
+        <h2>Templates de Page de Phishing</h2>
+        <a href="{{ url_for('manage_page_templates') }}" class="btn-primary">Gérer les Templates de Page</a>
+    </div>
+
+    <div class="resource-section">
+        <h2>Groupes de Cibles</h2>
+        <a href="{{ url_for('manage_target_groups') }}" class="btn-primary">Gérer les Groupes de Cibles</a>
+    </div>
+{% endblock %}
