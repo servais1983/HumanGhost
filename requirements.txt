@@ -2,3 +2,4 @@ pyyaml
 flask
 typer[all]
 jinja2
+Flask-SocketIO
