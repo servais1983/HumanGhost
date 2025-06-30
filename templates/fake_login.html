@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html>
-  <head><title>Connexion Banque</title></head>
-  <body>
-    <h2>Connexion</h2>
-    <form>
-      <label>Identifiant :</label><input type="text"><br>
-      <label>Mot de passe :</label><input type="password"><br>
-      <input type="submit" value="Connexion">
-    </form>
-  </body>
+<head>
+    <title>Connexion Banque</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-container { background: white; padding: 2em; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 0.5em; margin-bottom: 1em; border: 1px solid #ddd; border-radius: 3px; }
+        input[type="submit"] { background-color: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Connexion Requise</h2>
+        <form action="/login" method="post">
+            <label>Identifiant :</label>
+            <input type="text" name="username"><br>
+            <label>Mot de passe :</label>
+            <input type="password" name="password"><br>
+            <input type="submit" value="Connexion">
+        </form>
+    </div>
+</body>
 </html>
