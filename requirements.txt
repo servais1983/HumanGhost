@@ -4,3 +4,4 @@ typer[all]
 jinja2
 Flask-SocketIO
 qrcode[pil]
+openai
