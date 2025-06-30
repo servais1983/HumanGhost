@@ -1,5 +1,6 @@
 import yaml
-from core import host, send  # On retire 'create'
+from core import host, send
+import time
 
 def run_script_yaml(path):
     print(f"[*] Chargement du scénario YAML : {path}")
@@ -11,15 +12,27 @@ def run_script_yaml(path):
         return
 
     print(f"[*] Démarrage de la campagne : {config.get('name', 'Sans nom')}")
-
-    # L'ordre est maintenant défini dans la config
+    
+    server_thread = None
+    
     for step in config.get("steps", []):
         if step == "host":
-            # Le serveur host est bloquant, il est préférable de le lancer en dernier ou en parallèle
-            # Pour une exécution simple, on suppose qu'il est lancé et que l'utilisateur enverra l'email manuellement
-            # ou via un autre terminal. Dans une version avancée, on utiliserait des threads.
-            host.run(config)
+            # On lance le serveur dans un thread et on continue
+            server_thread = host.run_server_in_thread(config)
+            print("[*] Le serveur tourne en arrière-plan...")
         elif step == "send":
+            # On attend une seconde pour s'assurer que le serveur est bien démarré
+            time.sleep(1)
             send.run(config)
         else:
             print(f"[!] Étape inconnue dans le scénario : {step}")
+            
+    # Si le serveur tourne, on garde le script principal en vie
+    if server_thread and server_thread.is_alive():
+        print("[+] Campagne en cours. Appuyez sur CTRL+C pour arrêter le serveur et quitter.")
+        try:
+            # Garde le script principal en attente
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n[*] Arrêt du serveur et fin de la campagne.")
