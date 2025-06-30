@@ -115,6 +115,13 @@
             border-radius: 4px;
             margin-bottom: 1em;
         }
+
+        <nav>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if page == 'dashboard' else '' }}">Tableau de Bord</a>
+    <a href="{{ url_for('campaign_launcher') }}" class="{{ 'active' if page == 'launcher' else '' }}">Lancer une Campagne</a>
+    <a href="{{ url_for('resources') }}" class="{{ 'active' if page == 'resources' else '' }}">Gérer les Ressources</a>
+    <a href="{{ url_for('settings') }}" class="{{ 'active' if page == 'settings' else '' }}">Paramètres</a>
+</nav>
     </style>
 </head>
 <body>
