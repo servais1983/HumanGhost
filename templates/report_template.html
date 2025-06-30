@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport de Campagne - {{ campaign.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "Page " counter(page) " de " counter(pages);
+            }
+        }
+        body { font-family: 'Helvetica Neue', sans-serif; color: #333; }
+        h1, h2 { color: #d16969; border-bottom: 2px solid #569cd6; }
+        h1 { font-size: 24pt; text-align: center; }
+        h2 { font-size: 16pt; margin-top: 1.5em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .summary-box { background-color: #f9f9f9; border: 1px solid #eee; padding: 1em; margin-top: 1em; }
+        .credential { font-weight: bold; color: #d16969; }
+    </style>
+</head>
+<body>
+    <h1>Rapport de Campagne de Phishing</h1>
+    
+    <h2>Synthèse de la campagne "{{ campaign.name }}"</h2>
+    <div class="summary-box">
+        <p><strong>ID de la campagne :</strong> {{ campaign.id }}</p>
+        <p><strong>Date de création :</strong> {{ campaign.created_at.strftime('%Y-%m-%d à %H:%M:%S') }}</p>
+        <p><strong>Nombre total d'événements :</strong> {{ stats.total_events }}</p>
+        <p><strong>Nombre de visites :</strong> {{ stats.visits }}</p>
+        <p><strong>Nombre d'identifiants capturés :</strong> {{ stats.credentials_captured }}</p>
+        <p><strong>Taux de succès (identifiants/visites) :</strong> {{ '%.2f'|format(stats.success_rate * 100) }}%</p>
+    </div>
+
+    <h2>Journal des Événements</h2>
+    {% if events %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date et Heure</th>
+                    <th>Type d'Événement</th>
+                    <th>Adresse IP</th>
+                    <th>Détails</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                    <tr>
+                        <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="{{ 'credential' if 'Credential' in event.event_type else '' }}">{{ event.event_type }}</td>
+                        <td>{{ event.ip_address }}</td>
+                        <td>{{ event.details or 'N/A' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucun événement enregistré pour cette campagne.</p>
+    {% endif %}
+
+</body>
+</html>
