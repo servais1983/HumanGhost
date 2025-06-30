@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HumanGhost C2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; background-color: #1e1e1e; color: #d4d4d4; margin: 0; display: flex; }
+        .sidebar { width: 220px; background: #252526; padding: 1em; height: 100vh; }
+        .sidebar h2 { color: #d16969; }
+        .sidebar a { display: block; color: #d4d4d4; padding: 10px; text-decoration: none; border-radius: 4px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background-color: #333; }
+        .content { flex-grow: 1; padding: 2em; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>HumanGhost</h2>
+        <nav>
+            <a href="{{ url_for('dashboard') }}">Tableau de Bord</a>
+            <a href="{{ url_for('campaign_launcher') }}">Lancer une Campagne</a>
+            <a href="#">Gérer les Templates</a>
+            <a href="#">Gérer les Cibles</a>
+            <a href="#">Paramètres</a>
+        </nav>
+    </div>
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
