@@ -1,21 +1,42 @@
 {% extends "layout.html" %}
 {% block content %}
     <h1>Lancer une Nouvelle Campagne</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
     <form method="post">
         <label for="name">Nom de la campagne :</label>
         <input type="text" id="name" name="name" required>
 
         <label for="email_template">Template d'E-mail :</label>
         <select id="email_template" name="email_template_id" required>
-            </select>
+            <option value="">-- Sélectionner un template d'email --</option>
+            {% for template in email_templates %}
+                <option value="{{ template.id }}">{{ template.name }}</option>
+            {% endfor %}
+        </select>
 
         <label for="page_template">Template de Page :</label>
         <select id="page_template" name="page_template_id" required>
-            </select>
+            <option value="">-- Sélectionner un template de page --</option>
+            {% for template in page_templates %}
+                <option value="{{ template.id }}">{{ template.name }}</option>
+            {% endfor %}
+        </select>
 
         <label for="target_group">Groupe de Cibles :</label>
         <select id="target_group" name="target_group_id" required>
-            </select>
+            <option value="">-- Sélectionner un groupe de cibles --</option>
+            {% for group in target_groups %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+            {% endfor %}
+        </select>
         
         <input type="submit" value="Lancer la Campagne">
     </form>
