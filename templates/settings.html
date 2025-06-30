@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Paramètres Globaux</h1>
+    <p>Configurez ici vos clés API et vos serveurs. Ces informations sont stockées de manière sécurisée dans la base de données.</p>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="post">
+        <h2>Serveur SMTP</h2>
+        <label>Hôte SMTP</label>
+        <input type="text" name="smtp_host" value="{{ settings.get('smtp_host', '') }}">
+        <label>Port SMTP</label>
+        <input type="number" name="smtp_port" value="{{ settings.get('smtp_port', '587') }}">
+        <label>Email de l'expéditeur</label>
+        <input type="email" name="smtp_sender" value="{{ settings.get('smtp_sender', '') }}">
+        <label>Utilisateur SMTP</label>
+        <input type="text" name="smtp_user" value="{{ settings.get('smtp_user', '') }}">
+        <label>Mot de passe SMTP</label>
+        <input type="password" name="smtp_pass" value="{{ settings.get('smtp_pass', '') }}">
+
+        <h2>API OpenAI (LLM)</h2>
+        <label>Clé API OpenAI</label>
+        <input type="password" name="openai_api_key" value="{{ settings.get('openai_api_key', '') }}">
+
+        <input type="submit" value="Sauvegarder les Paramètres">
+    </form>
+{% endblock %}
