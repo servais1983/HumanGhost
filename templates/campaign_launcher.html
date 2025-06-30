@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Lancer une Nouvelle Campagne</h1>
+    <form method="post">
+        <label for="name">Nom de la campagne :</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="email_template">Template d'E-mail :</label>
+        <select id="email_template" name="email_template_id" required>
+            </select>
+
+        <label for="page_template">Template de Page :</label>
+        <select id="page_template" name="page_template_id" required>
+            </select>
+
+        <label for="target_group">Groupe de Cibles :</label>
+        <select id="target_group" name="target_group_id" required>
+            </select>
+        
+        <input type="submit" value="Lancer la Campagne">
+    </form>
+{% endblock %}
